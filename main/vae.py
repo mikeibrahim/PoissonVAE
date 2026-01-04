@@ -2,6 +2,7 @@ from base.common import *
 from base.distributions import (
 	dists, softclamp, softclamp_upper,
 	Normal, Laplace, Poisson, Categorical,
+	GumbelSoftmaxPoisson,
 )
 from figures.imgs import plot_weights
 
@@ -374,7 +375,15 @@ class BaseVAE(Module):
 class PoissonVAE(BaseVAE):
 	def __init__(self, cfg: ConfigPoisVAE, **kwargs):
 		super(PoissonVAE, self).__init__(cfg, **kwargs)
-		self.Dist = Poisson
+		
+		# Support for different distribution types
+		self.dist_type = getattr(cfg, 'dist_type', 'poisson')
+		if self.dist_type == 'gumbel':
+			self.Dist = GumbelSoftmaxPoisson
+			self.upperbound = getattr(cfg, 'upperbound', 5)
+		else:
+			self.Dist = Poisson
+		
 		self.register_buffer(
 			name='n_exp',
 			tensor=torch.tensor(0),
@@ -405,11 +414,20 @@ class PoissonVAE(BaseVAE):
 			log_dr = softclamp_upper(log_dr, 10.0)
 		if ablate is not None:
 			log_dr[:, ablate] = 0.0
-		dist = self.Dist(
-			log_rate=log_r + log_dr,
-			n_exp=self.n_exp,
-			temp=t,
-		)
+		
+		if self.dist_type == 'gumbel':
+			dist = self.Dist(
+				log_rate=log_r + log_dr,
+				temp=t,
+				upperbound_method="fixed",
+				upperbound_param=self.upperbound,
+			)
+		else:
+			dist = self.Dist(
+				log_rate=log_r + log_dr,
+				n_exp=self.n_exp,
+				temp=t,
+			)
 		return dist, log_dr
 
 	@torch.inference_mode()
@@ -431,11 +449,19 @@ class PoissonVAE(BaseVAE):
 		if t is None:
 			t = self.temp
 		log_r = self.log_rate.expand(n, -1)
-		dist = self.Dist(
-			log_rate=log_r,
-			n_exp=self.n_exp,
-			temp=t,
-		)
+		if self.dist_type == 'gumbel':
+			dist = self.Dist(
+				log_rate=log_r,
+				temp=t,
+				upperbound_method="fixed",
+				upperbound_param=self.upperbound,
+			)
+		else:
+			dist = self.Dist(
+				log_rate=log_r,
+				n_exp=self.n_exp,
+				temp=t,
+			)
 		spks = dist.rsample()
 		x_samples = self.decode(spks)
 		return x_samples, spks
