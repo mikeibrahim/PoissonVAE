@@ -56,7 +56,7 @@ def init_queue():
                     configs.append(config)
     
     # GumbelSoftmaxPoisson configurations
-    upperbounds = [2, 4, 6]
+    upperbounds = [5, 10, 15]
     for temp in temps:
         for anneal in anneals:
             for ub in upperbounds:

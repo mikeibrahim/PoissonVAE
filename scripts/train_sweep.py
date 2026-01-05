@@ -216,6 +216,8 @@ def train_model(config: dict, gpu_id: int):
     
     # Evaluate final model
     model.eval()
+    # Set temperature to 0 for deterministic evaluation
+    model.update_t(0.0)
     with torch.no_grad():
         dl_vld = torch.utils.data.DataLoader(
             vld_data, batch_size=1000, shuffle=False, drop_last=False
