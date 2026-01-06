@@ -16,7 +16,7 @@
     "fit_prior": true,
     "activation_fn": "swish",
     "init_dist": "Normal",
-    "init_scale": 0.0001,
+    "init_scale": 0.05,
     "res_eps": 1.0,
     "use_bn": false,
     "use_se": true,

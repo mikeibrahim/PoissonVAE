@@ -1,0 +1,187 @@
+======================================================================
+SWEEP_2 JOB LAUNCHER
+======================================================================
+
+Total jobs: 144
+Completed: 0
+Pending: 144
+
+Configuration:
+  GPUs: [0, 1]
+  Jobs per GPU: 6
+  Total concurrent: 12
+
+======================================================================
+LAUNCHING JOBS
+======================================================================
+  Launched: poisson_temp0.01_annealTrue_n16_seed0 on GPU 0 (session: sweep2_gpu0_0)
+  Launched: poisson_temp0.01_annealTrue_n16_seed1 on GPU 0 (session: sweep2_gpu0_1)
+  Launched: poisson_temp0.01_annealTrue_n16_seed2 on GPU 0 (session: sweep2_gpu0_2)
+  Launched: poisson_temp0.01_annealTrue_n32_seed0 on GPU 0 (session: sweep2_gpu0_3)
+  Launched: poisson_temp0.01_annealTrue_n32_seed1 on GPU 0 (session: sweep2_gpu0_4)
+  Launched: poisson_temp0.01_annealTrue_n32_seed2 on GPU 0 (session: sweep2_gpu0_5)
+  Launched: poisson_temp0.01_annealTrue_n64_seed0 on GPU 1 (session: sweep2_gpu1_0)
+  Launched: poisson_temp0.01_annealTrue_n64_seed1 on GPU 1 (session: sweep2_gpu1_1)
+  Launched: poisson_temp0.01_annealTrue_n64_seed2 on GPU 1 (session: sweep2_gpu1_2)
+  Launched: poisson_temp0.01_annealTrue_n128_seed0 on GPU 1 (session: sweep2_gpu1_3)
+  Launched: poisson_temp0.01_annealTrue_n128_seed1 on GPU 1 (session: sweep2_gpu1_4)
+  Launched: poisson_temp0.01_annealTrue_n128_seed2 on GPU 1 (session: sweep2_gpu1_5)
+
+Initial launch complete: 12 jobs started
+
+Monitoring and refilling slots...
+======================================================================
+
+  Completed: poisson_temp0.01_annealTrue_n16_seed0 (GPU 0)
+  Launched: poisson_temp0.01_annealTrue_n256_seed0 on GPU 0 (session: sweep2_gpu0_0)
+  Progress: 13/144 (9.0%)
+
+  Completed: poisson_temp0.01_annealTrue_n16_seed1 (GPU 0)
+  Launched: poisson_temp0.01_annealTrue_n256_seed1 on GPU 0 (session: sweep2_gpu0_1)
+  Progress: 14/144 (9.7%)
+
+  Completed: poisson_temp0.01_annealTrue_n16_seed2 (GPU 0)
+  Launched: poisson_temp0.01_annealTrue_n256_seed2 on GPU 0 (session: sweep2_gpu0_2)
+  Progress: 15/144 (10.4%)
+
+  Completed: poisson_temp0.01_annealTrue_n32_seed0 (GPU 0)
+  Launched: poisson_temp0.01_annealFalse_n16_seed0 on GPU 0 (session: sweep2_gpu0_3)
+  Progress: 16/144 (11.1%)
+
+  Completed: poisson_temp0.01_annealTrue_n32_seed1 (GPU 0)
+  Launched: poisson_temp0.01_annealFalse_n16_seed1 on GPU 0 (session: sweep2_gpu0_4)
+  Progress: 17/144 (11.8%)
+
+  Completed: poisson_temp0.01_annealTrue_n32_seed2 (GPU 0)
+  Launched: poisson_temp0.01_annealFalse_n16_seed2 on GPU 0 (session: sweep2_gpu0_5)
+  Progress: 18/144 (12.5%)
+
+  Completed: poisson_temp0.01_annealTrue_n64_seed0 (GPU 1)
+  Launched: poisson_temp0.01_annealFalse_n32_seed0 on GPU 1 (session: sweep2_gpu1_0)
+  Progress: 19/144 (13.2%)
+
+  Completed: poisson_temp0.01_annealTrue_n64_seed1 (GPU 1)
+  Launched: poisson_temp0.01_annealFalse_n32_seed1 on GPU 1 (session: sweep2_gpu1_1)
+  Progress: 20/144 (13.9%)
+
+  Completed: poisson_temp0.01_annealTrue_n64_seed2 (GPU 1)
+  Launched: poisson_temp0.01_annealFalse_n32_seed2 on GPU 1 (session: sweep2_gpu1_2)
+  Progress: 21/144 (14.6%)
+
+  Completed: poisson_temp0.01_annealTrue_n128_seed0 (GPU 1)
+  Launched: poisson_temp0.01_annealFalse_n64_seed0 on GPU 1 (session: sweep2_gpu1_3)
+  Progress: 22/144 (15.3%)
+
+  Completed: poisson_temp0.01_annealTrue_n128_seed1 (GPU 1)
+  Launched: poisson_temp0.01_annealFalse_n64_seed1 on GPU 1 (session: sweep2_gpu1_4)
+  Progress: 23/144 (16.0%)
+
+  Completed: poisson_temp0.01_annealTrue_n128_seed2 (GPU 1)
+  Launched: poisson_temp0.01_annealFalse_n64_seed2 on GPU 1 (session: sweep2_gpu1_5)
+  Progress: 24/144 (16.7%)
+
+  Completed: poisson_temp0.01_annealTrue_n256_seed0 (GPU 0)
+  Launched: poisson_temp0.01_annealFalse_n128_seed0 on GPU 0 (session: sweep2_gpu0_0)
+  Progress: 25/144 (17.4%)
+
+  Completed: poisson_temp0.01_annealTrue_n256_seed1 (GPU 0)
+  Launched: poisson_temp0.01_annealFalse_n128_seed1 on GPU 0 (session: sweep2_gpu0_1)
+  Progress: 26/144 (18.1%)
+
+  Completed: poisson_temp0.01_annealTrue_n256_seed2 (GPU 0)
+  Launched: poisson_temp0.01_annealFalse_n128_seed2 on GPU 0 (session: sweep2_gpu0_2)
+  Progress: 27/144 (18.8%)
+
+  Completed: poisson_temp0.01_annealFalse_n16_seed0 (GPU 0)
+  Launched: poisson_temp0.01_annealFalse_n256_seed0 on GPU 0 (session: sweep2_gpu0_3)
+  Progress: 28/144 (19.4%)
+
+  Completed: poisson_temp0.01_annealFalse_n16_seed1 (GPU 0)
+  Launched: poisson_temp0.01_annealFalse_n256_seed1 on GPU 0 (session: sweep2_gpu0_4)
+  Progress: 29/144 (20.1%)
+
+  Completed: poisson_temp0.01_annealFalse_n16_seed2 (GPU 0)
+  Launched: poisson_temp0.01_annealFalse_n256_seed2 on GPU 0 (session: sweep2_gpu0_5)
+  Progress: 30/144 (20.8%)
+
+  Completed: poisson_temp0.01_annealFalse_n32_seed0 (GPU 1)
+  Launched: poisson_temp0.1_annealTrue_n16_seed0 on GPU 1 (session: sweep2_gpu1_0)
+  Progress: 31/144 (21.5%)
+
+  Completed: poisson_temp0.01_annealFalse_n32_seed1 (GPU 1)
+  Launched: poisson_temp0.1_annealTrue_n16_seed1 on GPU 1 (session: sweep2_gpu1_1)
+  Progress: 32/144 (22.2%)
+
+  Completed: poisson_temp0.01_annealFalse_n32_seed2 (GPU 1)
+  Launched: poisson_temp0.1_annealTrue_n16_seed2 on GPU 1 (session: sweep2_gpu1_2)
+  Progress: 33/144 (22.9%)
+
+  Completed: poisson_temp0.01_annealFalse_n64_seed0 (GPU 1)
+  Launched: poisson_temp0.1_annealTrue_n32_seed0 on GPU 1 (session: sweep2_gpu1_3)
+  Progress: 34/144 (23.6%)
+
+  Completed: poisson_temp0.01_annealFalse_n64_seed1 (GPU 1)
+  Launched: poisson_temp0.1_annealTrue_n32_seed1 on GPU 1 (session: sweep2_gpu1_4)
+  Progress: 35/144 (24.3%)
+
+  Completed: poisson_temp0.01_annealFalse_n64_seed2 (GPU 1)
+  Launched: poisson_temp0.1_annealTrue_n32_seed2 on GPU 1 (session: sweep2_gpu1_5)
+  Progress: 36/144 (25.0%)
+
+  Completed: poisson_temp0.01_annealFalse_n128_seed0 (GPU 0)
+  Launched: poisson_temp0.1_annealTrue_n64_seed0 on GPU 0 (session: sweep2_gpu0_0)
+  Progress: 37/144 (25.7%)
+
+  Completed: poisson_temp0.01_annealFalse_n128_seed1 (GPU 0)
+  Launched: poisson_temp0.1_annealTrue_n64_seed1 on GPU 0 (session: sweep2_gpu0_1)
+  Progress: 38/144 (26.4%)
+
+  Completed: poisson_temp0.01_annealFalse_n128_seed2 (GPU 0)
+  Launched: poisson_temp0.1_annealTrue_n64_seed2 on GPU 0 (session: sweep2_gpu0_2)
+  Progress: 39/144 (27.1%)
+
+  Completed: poisson_temp0.01_annealFalse_n256_seed0 (GPU 0)
+  Launched: poisson_temp0.1_annealTrue_n128_seed0 on GPU 0 (session: sweep2_gpu0_3)
+  Progress: 40/144 (27.8%)
+
+  Completed: poisson_temp0.01_annealFalse_n256_seed1 (GPU 0)
+  Launched: poisson_temp0.1_annealTrue_n128_seed1 on GPU 0 (session: sweep2_gpu0_4)
+  Progress: 41/144 (28.5%)
+
+  Completed: poisson_temp0.01_annealFalse_n256_seed2 (GPU 0)
+  Launched: poisson_temp0.1_annealTrue_n128_seed2 on GPU 0 (session: sweep2_gpu0_5)
+  Progress: 42/144 (29.2%)
+
+  Completed: poisson_temp0.1_annealTrue_n16_seed0 (GPU 1)
+  Launched: poisson_temp0.1_annealTrue_n256_seed0 on GPU 1 (session: sweep2_gpu1_0)
+  Progress: 43/144 (29.9%)
+
+  Completed: poisson_temp0.1_annealTrue_n16_seed1 (GPU 1)
+  Launched: poisson_temp0.1_annealTrue_n256_seed1 on GPU 1 (session: sweep2_gpu1_1)
+  Progress: 44/144 (30.6%)
+
+  Completed: poisson_temp0.1_annealTrue_n16_seed2 (GPU 1)
+  Launched: poisson_temp0.1_annealTrue_n256_seed2 on GPU 1 (session: sweep2_gpu1_2)
+  Progress: 45/144 (31.2%)
+
+  Completed: poisson_temp0.1_annealTrue_n32_seed0 (GPU 1)
+  Launched: poisson_temp0.1_annealFalse_n16_seed0 on GPU 1 (session: sweep2_gpu1_3)
+  Progress: 46/144 (31.9%)
+
+  Completed: poisson_temp0.1_annealTrue_n32_seed1 (GPU 1)
+  Launched: poisson_temp0.1_annealFalse_n16_seed1 on GPU 1 (session: sweep2_gpu1_4)
+  Progress: 47/144 (32.6%)
+
+  Completed: poisson_temp0.1_annealTrue_n32_seed2 (GPU 1)
+  Launched: poisson_temp0.1_annealFalse_n16_seed2 on GPU 1 (session: sweep2_gpu1_5)
+  Progress: 48/144 (33.3%)
+
+  Completed: poisson_temp0.1_annealTrue_n64_seed0 (GPU 0)
+  Launched: poisson_temp0.1_annealFalse_n32_seed0 on GPU 0 (session: sweep2_gpu0_0)
+  Progress: 49/144 (34.0%)
+
+  Completed: poisson_temp0.1_annealTrue_n64_seed1 (GPU 0)
+  Launched: poisson_temp0.1_annealFalse_n32_seed1 on GPU 0 (session: sweep2_gpu0_1)
+  Progress: 50/144 (34.7%)
+
+  Completed: poisson_temp0.1_annealTrue_n64_seed2 (GPU 0)
