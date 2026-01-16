@@ -3,7 +3,7 @@ from base.config_base import *
 _LOG_DIST_CHOICES = ['cte', 'uniform', 'normal']
 _ARCHI_CHOICES = ['lin', 'conv', 'mlp']
 T_ANNEAL_CHOICES = ['lin', 'exp']
-METHOD_CHOICES = ['mc', 'exact']
+METHOD_CHOICES = ['mc', 'exact', 'score']
 DATA_CHOICES = [
 	'vH16', 'CIFAR16',
 	'MNIST', 'EMNIST',

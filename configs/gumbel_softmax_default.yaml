@@ -1,0 +1,47 @@
+# =============================================================================
+# GumbelSoftmax Poisson VAE - Default Configuration
+# =============================================================================
+#
+# This configuration trains a GumbelSoftmax Poisson VAE, which treats the
+# Poisson distribution as a categorical over {0, 1, ..., upperbound-1} and
+# uses Gumbel-Softmax for differentiable sampling.
+#
+# Usage:
+#   python train.py --config configs/gumbel_softmax_default.yaml --device 0
+#
+
+# Model Architecture
+model: gumbel_poisson
+dataset: vH16
+architecture: "lin|lin"
+n_latents: 512
+
+# Training Method
+method: mc                    # Monte Carlo (exact not applicable to GS)
+
+# Training Hyperparameters
+epochs: 3000
+batch_size: 64
+lr: 0.0002
+seed: 0
+
+# Temperature Annealing
+temp_start: 1.0
+temp_stop: 0.1
+temp_anneal: true
+temp_anneal_portion: 0.5
+
+# KL Divergence Settings
+kl_beta: 1.0
+kl_anneal_portion: 0.5
+
+# GumbelSoftmax-Specific Settings
+upperbound_method: fixed      # Options: fixed, std_ratio, quantile, adaptive
+upperbound_param: 50          # For fixed: max count value
+                              # For adaptive: quantile probability
+
+# Output and Logging
+checkpoint_dir: checkpoints
+wandb_project: PoissonVAE
+wandb_entity: poisson-collab
+verbose: false

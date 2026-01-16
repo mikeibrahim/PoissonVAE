@@ -1,0 +1,50 @@
+# =============================================================================
+# Poisson VAE - Score-Based Configuration
+# =============================================================================
+#
+# This configuration trains a Poisson VAE using denoising score matching
+# instead of the standard ELBO objective. Score matching learns to estimate
+# the gradient of the log-density, which can provide better gradient signal
+# in some cases.
+#
+# Usage:
+#   python train.py --config configs/poisson_score.yaml --device 0
+#
+# Note: This is an experimental training method. The standard 'mc' or 'exact'
+# methods are recommended for most use cases.
+#
+
+# Model Architecture
+model: poisson
+dataset: vH16
+architecture: "lin|lin"       # MUST be linear decoder for score method
+n_latents: 512
+
+# Training Method - SCORE MATCHING
+method: score                 # Denoising score matching objective
+
+# Training Hyperparameters
+epochs: 3000
+batch_size: 64
+lr: 0.0002
+seed: 0
+
+# Temperature Annealing
+temp_start: 1.0
+temp_stop: 0.1
+temp_anneal: true
+temp_anneal_portion: 0.5
+
+# KL Divergence Settings
+kl_beta: 1.0
+kl_anneal_portion: 0.5
+
+# Poisson-Specific Settings
+indicator_approx: sigmoid
+prior_clamp: -4.0             # Soft clamping for prior log rate
+
+# Output and Logging
+checkpoint_dir: checkpoints
+wandb_project: PoissonVAE
+wandb_entity: poisson-collab
+verbose: false

@@ -707,6 +707,9 @@ class TrainerVAE(_BaseTrainerVAE):
 				elif self.cfg.method == 'exact':
 					output = self.model.loss_recon_exact(x)
 					recon_batch, dist, log_dr = output
+				elif self.cfg.method == 'score':
+					output = self.model.loss_recon_score(x)
+					recon_batch, dist, log_dr = output
 				else:
 					raise ValueError(self.cfg.method)
 				kl = self.model.loss_kl(log_dr)
@@ -718,6 +721,9 @@ class TrainerVAE(_BaseTrainerVAE):
 					recon_batch = self.model.loss_recon(y, x)
 				elif self.cfg.method == 'exact':
 					output = self.model.loss_recon_exact(x)
+					recon_batch, dist, _ = output
+				elif self.cfg.method == 'score':
+					output = self.model.loss_recon_score(x)
 					recon_batch, dist, _ = output
 				else:
 					raise ValueError(self.cfg.method)
@@ -1173,7 +1179,7 @@ def _main():
 	cfg_tr = ConfigTrainVAE(**cfg_tr)
 
 	# custom modifications
-	if cfg_tr.method == 'exact' and 'mlp' in args.archi:
+	if cfg_tr.method in ['exact', 'score'] and 'mlp' in args.archi:
 		cfg_tr.grad_clip *= 4
 
 	# manually inject WandB args into cfg_tr

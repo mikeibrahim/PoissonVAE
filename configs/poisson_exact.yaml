@@ -1,0 +1,49 @@
+# =============================================================================
+# Poisson VAE - Exact Loss Configuration
+# =============================================================================
+#
+# This configuration trains a Poisson VAE using the analytical (exact)
+# reconstruction loss instead of Monte Carlo sampling. This is only valid
+# for linear decoders.
+#
+# The exact loss computes E[||x - W*z||^2] analytically using the mean and
+# variance of the posterior, avoiding sampling variance.
+#
+# Usage:
+#   python train.py --config configs/poisson_exact.yaml --device 0
+#
+
+# Model Architecture
+model: poisson
+dataset: vH16
+architecture: "lin|lin"       # MUST be linear decoder for exact loss
+n_latents: 512
+
+# Training Method - EXACT
+method: exact                 # Analytical reconstruction loss
+
+# Training Hyperparameters
+epochs: 3000
+batch_size: 64
+lr: 0.0002
+seed: 0
+
+# Temperature Annealing
+temp_start: 1.0
+temp_stop: 0.1
+temp_anneal: true
+temp_anneal_portion: 0.5
+
+# KL Divergence Settings
+kl_beta: 1.0
+kl_anneal_portion: 0.5
+
+# Poisson-Specific Settings
+indicator_approx: sigmoid     # Still used for sampling during evaluation
+prior_clamp: -4.0             # Soft clamping for prior log rate
+
+# Output and Logging
+checkpoint_dir: checkpoints
+wandb_project: PoissonVAE
+wandb_entity: poisson-collab
+verbose: false

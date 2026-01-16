@@ -1,3 +1,52 @@
+"""
+Variational Autoencoder (VAE) Models for Sparse Representation Learning
+
+This module implements several VAE variants with different posterior distributions:
+
+1. **PoissonVAE**: Uses Poisson posterior with differentiable reparameterization via
+   the exponential trick. Supports soft indicator functions (sigmoid, cubic, etc.)
+   for gradient flow during training.
+
+2. **GumbelSoftmaxPoissonVAE**: Uses Gumbel-Softmax relaxation to treat Poisson as
+   a categorical distribution over {0, 1, ..., upperbound-1}. Provides an alternative
+   differentiable approximation.
+
+3. **GaussianVAE**: Standard VAE with Gaussian posterior and reparameterization trick.
+
+4. **LaplaceVAE**: VAE with Laplace posterior for sparse representations.
+
+5. **CategoricalVAE**: VAE with categorical posterior using Gumbel-Softmax.
+
+Key Features:
+- Multiple encoder/decoder architectures: linear, convolutional, MLP
+- Temperature annealing for transitioning from soft to hard sampling
+- Support for exact (analytical) and score-based loss computation
+- Learnable prior distributions
+
+Architecture Options:
+- enc_type: 'lin' (linear), 'conv' (convolutional), 'mlp' (multi-layer perceptron)
+- dec_type: 'lin' (linear), 'conv' (convolutional), 'mlp' (multi-layer perceptron)
+
+Example Usage:
+    >>> from main.config_vae import ConfigPoisVAE
+    >>> from main.vae import PoissonVAE
+    >>> 
+    >>> cfg = ConfigPoisVAE(dataset='vH16', n_latents=512)
+    >>> model = PoissonVAE(cfg)
+    >>> 
+    >>> # Forward pass
+    >>> dist, log_rate, z, recon = model(x)
+    >>> 
+    >>> # Compute losses
+    >>> recon_loss = model.loss_recon(recon, x)
+    >>> kl_loss = model.loss_kl(log_rate)
+
+See Also:
+    - base/distributions.py: Distribution implementations
+    - main/config_vae.py: Configuration classes
+    - main/train_vae.py: Training utilities
+"""
+
 from base.common import *
 from base.distributions import (
 	dists, softclamp, softclamp_upper,
@@ -7,6 +56,27 @@ from figures.imgs import plot_weights
 
 
 class BaseVAE(Module):
+	"""
+	Base class for all Variational Autoencoder models.
+	
+	This abstract class provides the common structure for VAE models including:
+	- Encoder/decoder architecture setup
+	- Temperature control for soft sampling
+	- Reconstruction and KL divergence loss computation
+	- Model introspection utilities
+	
+	Subclasses must implement:
+	- forward(): Full forward pass returning posterior and reconstruction
+	- infer(): Inference pass returning posterior distribution
+	- xtract_ftr(): Feature extraction at specified temperature
+	- sample(): Generation of new samples
+	- loss_kl(): KL divergence computation specific to the posterior type
+	
+	Attributes:
+		cfg (ConfigVAE): Model configuration
+		temp (Tensor): Current temperature for soft sampling (buffer)
+		Dist: Distribution class used for the posterior
+	"""
 	def __init__(self, cfg: ConfigVAE, **kwargs):
 		super(BaseVAE, self).__init__(cfg, **kwargs)
 		self.Dist: dists.Distribution()
@@ -86,11 +156,75 @@ class BaseVAE(Module):
 		# decoder weights
 		phi = self.fc_dec.get_weight()
 		a = phi.pow(2).sum(0)
-		# compute loss
-		mse = x - mu @ phi.T
+		# compute loss (flatten x for linear algebra)
+		x_flat = x.flatten(start_dim=1)
+		mse = x_flat - mu @ phi.T
 		mse = mse.pow(2).sum(1)
 		recon_batch = mse + var @ a
 		return recon_batch, dist, etc
+
+	def loss_recon_score(self, x, noise_std: float = 0.1):
+		"""
+		Score-based reconstruction loss using denoising score matching.
+		
+		This method trains the model to estimate the score function (gradient of 
+		log-density) by learning to denoise corrupted inputs. The score matching
+		objective is equivalent to matching the gradient of the log-posterior.
+		
+		The loss is computed as:
+		    L = E[||score(x_noisy) - (-noise / sigma^2)||^2]
+		
+		where score(x) = d/dx log p(x|z) and the target is the negative of the
+		added noise scaled by variance.
+		
+		Args:
+			x: Input data tensor [batch, channels, height, width]
+			noise_std: Standard deviation of Gaussian noise to add
+			
+		Returns:
+			Tuple of (score_loss, dist, etc) where:
+				- score_loss: Per-sample score matching loss [batch]
+				- dist: Posterior distribution object
+				- etc: Additional outputs (e.g., log rate for Poisson)
+		
+		Notes:
+			- Only valid for linear decoders where the score can be computed analytically
+			- The score of a Gaussian reconstruction likelihood is: (x_recon - x) / sigma^2
+			- For Poisson posteriors, this provides a different training signal than ELBO
+		"""
+		assert self.cfg.dec_type == 'lin', \
+			"score-based method only valid for linear decoder"
+		
+		# Add noise to input
+		noise = torch.randn_like(x) * noise_std
+		x_noisy = x + noise
+		
+		# Infer posterior from noisy input
+		output = self.infer(x_noisy)
+		if isinstance(output, tuple):
+			dist, etc = output
+		else:
+			dist, etc = output, None
+		
+		# Get posterior mean and decode
+		mu = dist.mean.flatten(start_dim=1)
+		phi = self.fc_dec.get_weight()
+		x_recon = (mu @ phi.T).view_as(x)
+		
+		# Compute model's implicit score: d/dx log p(x|z) = (x_recon - x_noisy) / sigma^2
+		# For MSE reconstruction, the score is proportional to the residual
+		model_score = (x_recon - x_noisy) / (noise_std ** 2)
+		
+		# Target score: -noise / sigma^2 (from denoising score matching)
+		target_score = -noise / (noise_std ** 2)
+		
+		# Score matching loss: ||model_score - target_score||^2
+		score_loss = torch.sum(
+			(model_score - target_score).pow(2),
+			dim=[1, 2, 3]
+		)
+		
+		return score_loss, dist, etc
 
 	def loss_kl(self, *args, **kwargs):
 		raise NotImplementedError

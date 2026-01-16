@@ -1,0 +1,45 @@
+# =============================================================================
+# Poisson VAE - Default Configuration
+# =============================================================================
+# 
+# This configuration trains a Poisson VAE with exponential reparameterization
+# using the sigmoid soft indicator function.
+#
+# Usage:
+#   python train.py --config configs/poisson_default.yaml --device 0
+#
+
+# Model Architecture
+model: poisson
+dataset: vH16
+architecture: "lin|lin"
+n_latents: 512
+
+# Training Method
+method: mc                    # 'mc' for Monte Carlo, 'exact' for analytical
+
+# Training Hyperparameters
+epochs: 3000
+batch_size: 64
+lr: 0.0002
+seed: 0
+
+# Temperature Annealing
+temp_start: 1.0
+temp_stop: 0.1
+temp_anneal: true
+temp_anneal_portion: 0.5
+
+# KL Divergence Settings
+kl_beta: 1.0
+kl_anneal_portion: 0.5
+
+# Poisson-Specific Settings
+indicator_approx: sigmoid     # Options: sigmoid, cubic, linear, cosine
+prior_clamp: -4.0             # Soft clamping for prior log rate
+
+# Output and Logging
+checkpoint_dir: checkpoints
+wandb_project: PoissonVAE
+wandb_entity: poisson-collab
+verbose: false

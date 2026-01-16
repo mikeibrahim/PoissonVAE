@@ -1,8 +1,59 @@
-.idea
-/.idea/
-/.ipynb_checkpoints/
-.ipynb_checkpoints
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.eggs/
+*.egg-info/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# OS files
 .DS_Store
-/checkpoints
+Thumbs.db
+
+# Model checkpoints (large files)
+/checkpoints/
+
+# Weights & Biases
+wandb/
+
+# Logs
+*.log
+logs/
+
+# Data (should be downloaded separately)
+/data/
+/Datasets/
+
+# Build artifacts
+dist/
+build/
+*.whl
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
