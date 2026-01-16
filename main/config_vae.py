@@ -180,6 +180,8 @@ class ConfigPoisVAE(ConfigVAE):
 			indicator_approx: str = 'sigmoid',
 			hard_fwd: bool = False,
 			exc_only: bool = False,
+			upperbound_method: str = 'fixed',
+			upperbound_param: int = 50,
 			**kwargs,
 	):
 		assert prior_log_dist in _LOG_DIST_CHOICES, \
@@ -189,6 +191,8 @@ class ConfigPoisVAE(ConfigVAE):
 		self.prior_clamp = prior_clamp
 		self.hard_fwd = hard_fwd
 		self.exc_only = exc_only
+		self.upperbound_method = upperbound_method
+		self.upperbound_param = upperbound_param
 		super(ConfigPoisVAE, self).__init__(
 			**kwargs)
 
@@ -395,6 +399,12 @@ def default_configs(
 			fit_prior=True,
 		)
 		cfg_tr = dict()
+	elif model_type == 'gumbel_poisson':
+		cfg_vae = dict(
+			prior_clamp=-2,
+			fit_prior=True,
+		)
+		cfg_tr = dict()
 	elif model_type in ['gaussian', 'laplace']:
 		cfg_vae = dict()
 		cfg_tr = dict(
@@ -509,6 +519,7 @@ def _archi2attr(architecture: str):
 
 CFG_CLASSES = {
 	'poisson': ConfigPoisVAE,
+	'gumbel_poisson': ConfigPoisVAE,
 	'gaussian': ConfigGausVAE,
 	'laplace': ConfigLapVAE,
 	'categorical': ConfigCatVAE,

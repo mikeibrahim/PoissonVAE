@@ -1,7 +1,7 @@
 from base.common import *
 from base.distributions import (
 	dists, softclamp, softclamp_upper,
-	Normal, Laplace, Poisson, Categorical,
+	Normal, Laplace, Poisson, Categorical, GumbelSoftmaxPoisson,
 )
 from figures.imgs import plot_weights
 
@@ -491,6 +491,152 @@ class PoissonVAE(BaseVAE):
 		return
 
 
+class GumbelSoftmaxPoissonVAE(BaseVAE):
+	def __init__(self, cfg: ConfigPoisVAE, **kwargs):
+		super(GumbelSoftmaxPoissonVAE, self).__init__(cfg, **kwargs)
+		self.Dist = GumbelSoftmaxPoisson
+		# Register buffer for adaptive upperbound
+		self.register_buffer(
+			name='upperbound',
+			tensor=torch.tensor(0),
+		)
+		self.update_upperbound(200.0)  # Initialize with default value
+
+	def update_upperbound(self, rate: float):
+		"""
+		Update the upperbound for GumbelSoftmax Poisson sampling.
+		
+		For 'adaptive' upperbound_method, computes upperbound as the
+		(1 - 1e-5) quantile of Poisson(rate). This is called at the end
+		of each epoch with the running average of max rates.
+		
+		Args:
+			rate: The average maximum rate observed during training
+		"""
+		if rate is None:
+			return
+		if self.cfg.upperbound_method != 'adaptive':
+			return
+		assert rate > 0.0, "must be positive"
+		dist = sp_stats.poisson(rate)
+		upperbound = dist.ppf(1.0 - 1e-5)
+		self.upperbound.fill_(int(upperbound))
+
+	def forward(self, x, hard: bool = False):
+		# infer
+		dist, log_dr = self.infer(x)
+		# sample
+		spks = dist.rsample()
+		if hard:
+			# For hard sampling, get discrete samples
+			spks = dist.sample()
+		else:
+			# For soft sampling, aggregate Gumbel-Softmax samples
+			spks = dist.aggregate_samples(spks)
+		# decode
+		y = self.decode(spks)
+		return dist, log_dr, spks, y
+
+	def infer(
+			self,
+			x: torch.Tensor,
+			t: float = None,
+			ablate: Sequence[int] = None, ):
+		if t is None:
+			t = self.temp
+		log_r = self.log_rate.expand(len(x), -1)
+		log_dr = self.encode(x)
+		if self.cfg.exc_only:
+			log_dr = softclamp(log_dr, 10.0, 0)
+		else:
+			log_dr = softclamp_upper(log_dr, 10.0)
+		if ablate is not None:
+			log_dr[:, ablate] = 0.0
+		# For adaptive upperbound, pass the buffer value
+		ub_param = self.upperbound.item() if self.cfg.upperbound_method == 'adaptive' else self.cfg.upperbound_param
+		dist = self.Dist(
+			log_rate=log_r + log_dr,
+			temp=t,
+			upperbound_method=self.cfg.upperbound_method,
+			upperbound_param=ub_param,
+		)
+		return dist, log_dr
+
+	@torch.no_grad()
+	def xtract_ftr(
+			self,
+			x: torch.Tensor,
+			t: float = 0.0,
+			ablate_enc: Sequence[int] = None,
+			ablate_spks: Sequence[int] = None, ):
+		dist, log_dr = self.infer(x, t, ablate_enc)
+		spks = dist.rsample()
+		# Only aggregate if we got Gumbel-Softmax output (temp > 0)
+		if t > 0.0 and spks.dim() == 3:
+			spks = dist.aggregate_samples(spks)
+		if ablate_spks is not None:
+			spks[:, ablate_spks] = 0.0
+		y = self.decode(spks)
+		return dist, log_dr, spks, y
+
+	@torch.no_grad()
+	def sample(self, n: int, t: float = 0.0):
+		if t is None:
+			t = self.temp
+		log_r = self.log_rate.expand(n, -1)
+		# For adaptive upperbound, pass the buffer value
+		ub_param = self.upperbound.item() if self.cfg.upperbound_method == 'adaptive' else self.cfg.upperbound_param
+		dist = self.Dist(
+			log_rate=log_r,
+			temp=t,
+			upperbound_method=self.cfg.upperbound_method,
+			upperbound_param=ub_param,
+		)
+		spks = dist.rsample()
+		spks = dist.aggregate_samples(spks)
+		x_samples = self.decode(spks)
+		return x_samples, spks
+
+	def loss_kl(self, log_dr):
+		log_r = self.log_rate.expand(len(log_dr), -1)
+		f = 1 + torch.exp(log_dr) * (log_dr - 1)
+		kl = torch.exp(log_r) * f
+		return kl
+
+	def _init_prior(self):
+		rng = get_rng(self.cfg.seed)
+		kws = {'size': (1, self.cfg.n_latents)}
+		if self.cfg.prior_log_dist == 'cte':
+			log_rate = np.ones(kws['size'])
+			log_rate *= self.cfg.prior_clamp
+		elif self.cfg.prior_log_dist == 'uniform':
+			kws.update(dict(
+				low=-6.0,
+				high=self.cfg.prior_clamp,
+			))
+			log_rate = rng.uniform(**kws)
+		elif self.cfg.prior_log_dist == 'normal':
+			s = np.abs(np.log(np.abs(
+				self.cfg.prior_clamp)))
+			kws.update(dict(loc=0.0, scale=s))
+			log_rate = rng.normal(**kws)
+		else:
+			raise NotImplementedError(
+				self.cfg.prior_log_dist)
+
+		log_rate = torch.tensor(
+			data=log_rate,
+			dtype=torch.float,
+		)
+		log_rate[log_rate > 6.0] = 0.0
+
+		self.log_rate = nn.Parameter(
+			data=log_rate,
+			requires_grad=True
+		)
+		return
+
+
 class ContinuousVAE(BaseVAE):
 	def __init__(self, cfg: Union[ConfigGausVAE, ConfigLapVAE], **kwargs):
 		super(ContinuousVAE, self).__init__(cfg, **kwargs)
@@ -804,6 +950,7 @@ def _build_mlp(n_dims: int, n_layers: int = 3):
 
 MODEL_CLASSES = {
 	'poisson': PoissonVAE,
+	'gumbel_poisson': GumbelSoftmaxPoissonVAE,
 	'gaussian': GaussianVAE,
 	'laplace': LaplaceVAE,
 	'categorical': CategoricalVAE,

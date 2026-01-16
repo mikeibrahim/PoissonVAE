@@ -59,7 +59,9 @@ def _main():
 	if not len(epochs):
 		return
 
-	args['archi'] = tr.model.cfg.attr2archi()
+	# Convert args to dict for compatibility
+	args_dict = vars(args)
+	args_dict['archi'] = tr.model.cfg.attr2archi()
 
 	if args.cudnn_bench:
 		torch.backends.cudnn.benchmark = True
@@ -80,7 +82,7 @@ def _main():
 			epochs=epochs,
 			fresh_fit=False
 		)
-		save_fit_info(vars(args), tr, start)
+		save_fit_info(args_dict, tr, start)
 	return
 
 

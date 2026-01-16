@@ -2,7 +2,7 @@ from base.train_base import *
 from base.dataset import make_dataset
 from .vae import (
 	MODEL_CLASSES, BaseVAE,
-	PoissonVAE, GaussianVAE,
+	PoissonVAE, GumbelSoftmaxPoissonVAE, GaussianVAE,
 	CategoricalVAE, LaplaceVAE,
 )
 from figures.imgs import make_grid
@@ -395,6 +395,7 @@ class TrainerVAE(_BaseTrainerVAE):
 				_v /= self.model.cfg.input_sz ** 2
 				perdim_mse.update(_v)
 				perdim_kl.update(kl_diag.mean().item())
+				# Track r_max for Poisson models (including GumbelSoftmax)
 				if self.model.cfg.type == 'poisson':
 					r_max.update(dist.rate.max().item())
 
@@ -413,10 +414,13 @@ class TrainerVAE(_BaseTrainerVAE):
 			# save more stats
 			current_lr = self.optim.param_groups[0]['lr']
 			self.stats['lr'][gstep] = current_lr
-			self.stats['temp'][gstep] = dist.temp.item()
-			if self.model.cfg.type == 'poisson':
+			self.stats['temp'][gstep] = dist.temp if isinstance(dist.temp, float) else dist.temp.item()
+			if self.model.cfg.type == 'poisson' and hasattr(self.model, 'n_exp'):
 				self.stats['r_max'][gstep] = r_max.avg
 				self.stats['n_exp'][gstep] = self.model.n_exp.item()
+			# Track upperbound for GumbelSoftmax models
+			if self.model.cfg.type == 'poisson' and hasattr(self.model, 'upperbound'):
+				self.stats['upperbound'][gstep] = self.model.upperbound.item()
 
 			# WANDB LOGGING
 			cond_write = (
@@ -434,7 +438,7 @@ class TrainerVAE(_BaseTrainerVAE):
 			}
 			if self.wd_coeffs[gstep] > 0:
 				to_write['coeffs/reg_coeff'] = self.wd_coeffs[gstep]
-			if self.model.cfg.type == 'poisson':
+			if self.model.cfg.type == 'poisson' and hasattr(self.model, 'n_exp'):
 				to_write.update({
 					'coeffs/r_max': r_max.avg,
 					'coeffs/n_exp': self.model.n_exp,
@@ -465,8 +469,11 @@ class TrainerVAE(_BaseTrainerVAE):
 				nelbo.reset()
 
 		# end of epock n_exp update
-		if self.model.cfg.type == 'poisson':
+		if self.model.cfg.type == 'poisson' and hasattr(self.model, 'update_n'):
 			self.model.update_n(r_max.avg)
+		# end of epoch upperbound update (for GumbelSoftmax with adaptive upperbound)
+		if self.model.cfg.type == 'poisson' and hasattr(self.model, 'update_upperbound'):
+			self.model.update_upperbound(r_max.avg)
 
 		return nelbo.avg
 
@@ -910,6 +917,19 @@ def _setup_args() -> argparse.Namespace:
 		default=False,
 		type=true_fn,
 	)
+	# gumbel-softmax poisson
+	parser.add_argument(
+		"--upperbound_method",
+		help='method for upperbound (fixed, std_ratio, quantile, adaptive)',
+		default='fixed',
+		type=str,
+	)
+	parser.add_argument(
+		"--upperbound_param",
+		help='parameter for upperbound method',
+		default=50,
+		type=lambda v: placeholder_fn(v, int) if isinstance(v, str) else int(v),
+	)
 	# categorical
 	parser.add_argument(
 		"--n_categories",
@@ -982,6 +1002,12 @@ def _setup_args() -> argparse.Namespace:
 		help='temp: start —> [stop]',
 		default='__placeholder__',
 		type=lambda v: placeholder_fn(v, float),
+	)
+	parser.add_argument(
+		"--temp_anneal",
+		help='enable temperature annealing',
+		action='store_true',
+		default=False,
 	)
 	parser.add_argument(
 		"--temp_anneal_type",
@@ -1136,6 +1162,11 @@ def _main():
 			cfg_vae[k] = v
 		if k in cfg_tr:
 			cfg_tr[k] = v
+	
+	# Handle temp_anneal flag: if False, disable annealing by setting portion to 0
+	if hasattr(args, 'temp_anneal') and not args.temp_anneal:
+		cfg_tr['temp_anneal_portion'] = 0.0
+	
 	# final convert: from dict to cfg objects
 	cfg_vae['save'] = not args.dry_run
 	cfg_vae = CFG_CLASSES[args.model](**cfg_vae)
